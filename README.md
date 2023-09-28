@@ -59,14 +59,23 @@ Right now, we are not very sure how the input data is determining the model beha
 
 3. Model Interpretability
 
+Improving our ML models presents a significant challenge primarily due to the inherent ambiguity within the model. We often struggle to discern why the model delivers accurate results on certain occasions while faltering on others. This uncertainty stems from the opaque nature of the model's underlying weights and parameters, obscuring the rationale behind its decisions. To enhance our models, our first imperative is to unravel this ambiguity and gain a comprehensive understanding of their inner workings before embarking on the journey of improvement.Insights gained from model explanations can be used to enhance the model. For example, if a feature is identified as highly influential but its behavior is inconsistent with expectations, it may indicate a need for data preprocessing or feature engineering.
 
+We need a step in the workflow to dedicate for explaining the model for us using languages that human can understand.
 
+4. Model evaluation (during training and after training)
+
+A good model evaluation metric is the key to progress towards the better state in next iteration, instead of going in circles. A model evaluation metric quantifies the model's performance, providing a clear benchmark to gauge its effectiveness. Without a dedicated step for model evaluation, we may lack the means to measure whether our model is getting better or not. Also, by regularly assessing the model against a well-defined evaluation metric, we obtain actionable insights into areas where the model falls short. This enables us to pinpoint weaknesses and make targeted adjustments in the next iteration, guiding the improvement process in a constructive direction. Meanwhile, without continuous evaluation, we risk repeating the same mistakes and encountering similar obstacles in each iteration. An evaluation step acts as a corrective mechanism, steering us away from unproductive cycles and propelling us toward genuine enhancements. Evaluation metrics are data-driven and objective, reducing subjectivity in the assessment process. They provide a solid foundation for making informed decisions about model adjustments and optimizations.
+
+The workflow need a dedicated evaluation step to output the metrics for every run of training and prediction. We also need to determine which evaluation metrics is the best for the model during the training process (loss function, validation metric, optimizers, etc). 
 
 
 ## Expected Results
 
+A scalable, reliable, reusable, operational workflow that can be run any time when people want to generate a forecasting SWE map (as long as they have the inputs ready, right now it is meteology and AMSR observation) for western U.S.
 
 ## How to contribute?
+
 
 
 ## Prerequisite Skills
