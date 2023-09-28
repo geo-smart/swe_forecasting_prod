@@ -31,9 +31,11 @@ We used GeoWeaver, a handy workflow management system, designed to help us creat
 
 <img width="1205" alt="image" src="https://github.com/geo-smart/swe_forecasting_prod/assets/17322987/899b9694-6863-45d4-9b76-9c90820ced05">
 
+All the source code and history can be retrieved [here](https://github.com/geo-smart/SnowCast)
+
 ## Machine Learning Models
 
-The current model is optimized and picked using PyCaret, which is ExtraTreeRegressor. The training accuracy is very high (>99%), but it constantly underestimates the high SWE regions, which is understandable, because predicting low values is less penalized in the current training data. 
+The current model is optimized and picked using PyCaret, which is `ExtraTreeRegressor`. The training accuracy is very high (>99%), but it constantly underestimates the high SWE regions, which is understandable, because predicting low values is less penalized in the current training data. 
 
 The other model candidates we want/have tried:
 - LSTM
