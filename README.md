@@ -74,11 +74,62 @@ The workflow need a dedicated evaluation step to output the metrics for every ru
 
 A scalable, reliable, reusable, operational workflow that can be run any time when people want to generate a forecasting SWE map (as long as they have the inputs ready, right now it is meteology and AMSR observation) for western U.S.
 
+The workflow will be one-click exported from the operational Geoweaver instance in the prod EC2 instance, and published in the Github repository. A short paper and documentation will be created to explain the workflow and guide users. 
+
 ## How to contribute?
 
+We welcome contributions from the community to help us address the key problems and achieve our goals in developing a robust SWE forecasting workflow for the western U.S. Your contributions can make a significant impact on improving our model and workflow. Here's how you can get involved:
 
+- Code Contributions:
 
-## Prerequisite Skills
+If you have expertise in machine learning, geospatial analysis, or related fields, you can contribute code to enhance our forecasting model and workflow. This may include implementing new algorithms, improving data processing steps, or optimizing existing code.
+Fork our GitHub repository and submit pull requests with your code changes. Our team will review and merge the contributions.
 
+- Data Expertise:
+
+Data quality is crucial for accurate forecasting. If you have domain knowledge in meteorology, remote sensing, or related areas, you can help improve our data preprocessing and feature engineering processes.
+Share insights and recommendations for better data handling and integration.
+
+- Model Interpretability:
+
+If you specialize in model interpretability techniques, you can help us understand why our model behaves the way it does. Provide guidance on interpreting model results and suggest improvements to enhance interpretability.
+
+- Sensitivity Analysis:
+
+Collaborate with us to explore better ways of conducting sensitivity analysis. Share your expertise in feature importance analysis, correlation evaluation, or other methods to understand how input variables impact model behavior.
+
+- Evaluation Metrics:
+
+Contribute to the selection of appropriate evaluation metrics during model training and post-training evaluation. Help us define the best criteria for assessing model performance, including loss functions, validation metrics, and optimizers.
+
+- Documentation:
+
+Documentation is key to ensuring that our workflow is usable and understandable. Contribute by improving our documentation, writing guides for users, and creating clear explanations of model processes and outcomes.
+
+- Testing and Validation:
+
+Help us test and validate the workflow by running experiments and providing feedback. Identify areas where the model or workflow may need adjustments or fine-tuning.
+
+- Reporting Issues:
+
+If you come across any issues, bugs, or areas for improvement in our workflow, please report them on our GitHub repository's issue tracker. Be sure to provide detailed information about the problem you've encountered.
+
+- Spread the Word:
+
+Share information about our project with your network and encourage others who might be interested in SWE forecasting, machine learning, or geospatial analysis to contribute or use our workflow.
+
+- Feedback:
+
+We value feedback from users and contributors. If you've used our workflow or have ideas for improvements, please share your feedback with us.
+
+## Some Preferred Skills for Quick Start
+
+- Python Programming, better with experiences on Scikit-learn, Pytorch, and Tensorflow or Keras.
+
+- Git/Github branch, merge, commit, PR.
+
+- Linux Shell Scripting.
+
+- Geospatial data processing, like xarray, rasterio, dask, plotly, HDF5, netcdf, zarr, etc.
 
 
