@@ -10,7 +10,7 @@ Some preliminary results and machine learning models are obviously underestimati
 
 ![2022_predicted_swe_2022-03-15](https://github.com/geo-smart/swe_forecasting_prod/assets/17322987/f0937113-e757-4022-877c-f46ee332bce4)
 
-The current involved datasets that are used to create the `training.csv`:
+The current datasets that are used to create the `training.csv`:
 - NASA SRTM 30M DEM
 - [NSIDC AMSR](https://nsidc.org/data/au_dysno/versions/1)
 - [gridMET Meteo Datasets](https://www.northwestknowledge.net/metdata/data/)
