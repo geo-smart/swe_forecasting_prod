@@ -4,7 +4,7 @@
 
 This project aims to develop a robust and scalable workflow for predicting snow water equivalent in the context of the western United States. This project leverages machine learning and geospatial analysis techniques to address the changing patterns of snowpacks in this region.
 
-We basically have the barebone workflow up and running, but the machine learning models and some steps need a lot of work to get it function correctly and up to our expection. Please refer to the `Key Problems to Solve` section to get more details about the issues that are puzzling right now.
+We basically have the barebone workflow up and running, but the machine learning models and some steps need work to get it function correctly and up to our expection. Please refer to the `Key Problems to Solve` section to get more details about the issues that are puzzling right now.
 
 Some preliminary results and machine learning models are obviously underestimating most time.
 
