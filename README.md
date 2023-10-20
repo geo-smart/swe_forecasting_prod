@@ -43,7 +43,7 @@ The other model candidates we want/have tried:
 - Self Attention
 - DNN + DRL (Deep Reinformance Learning)
 
-## Key Problems to Solve
+## Key Problems To Solve
 
 1. Underestimation (overfitting)
 
@@ -68,6 +68,12 @@ We need a step in the workflow to dedicate for explaining the model for us using
 A good model evaluation metric is the key to progress towards the better state in next iteration, instead of going in circles. A model evaluation metric quantifies the model's performance, providing a clear benchmark to gauge its effectiveness. Without a dedicated step for model evaluation, we may lack the means to measure whether our model is getting better or not. Also, by regularly assessing the model against a well-defined evaluation metric, we obtain actionable insights into areas where the model falls short. This enables us to pinpoint weaknesses and make targeted adjustments in the next iteration, guiding the improvement process in a constructive direction. Meanwhile, without continuous evaluation, we risk repeating the same mistakes and encountering similar obstacles in each iteration. An evaluation step acts as a corrective mechanism, steering us away from unproductive cycles and propelling us toward genuine enhancements. Evaluation metrics are data-driven and objective, reducing subjectivity in the assessment process. They provide a solid foundation for making informed decisions about model adjustments and optimizations.
 
 The workflow need a dedicated evaluation step to output the metrics for every run of training and prediction. We also need to determine which evaluation metrics is the best for the model during the training process (loss function, validation metric, optimizers, etc). 
+
+## Tasks to Work On During Hackweek
+
+1. Examine the preprocessing workflow for preparing the training data is correct. 
+
+2. 
 
 
 ## Expected Results
