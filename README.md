@@ -16,6 +16,16 @@ The current datasets that are used to create the `training.csv`:
 - [gridMET Meteo Datasets](https://www.northwestknowledge.net/metdata/data/)
 - SNOTEL ground observations
 
+## Team
+
+### GeoHackWeek 2024 Team
+
+
+
+### GeoSMART Hackweek 2023 Team
+
+
+
 ## Development Platform
 
 We will have three development platforms for each team member:
