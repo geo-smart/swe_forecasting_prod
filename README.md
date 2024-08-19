@@ -26,13 +26,13 @@ The current datasets that are used to create the `training.csv`:
 
 ### GeoSMART Hackweek 2023 Team
 
-- Dr. Justin Pflug
-- Dr. Ziheng Sun
-- Dr. Mahboubeh Bousshagh
-- Dr Irene Garousi-Nejad, 
-- Dr. Juan S. Acero Triana
-- Dr. Bonan Li
-- Dr. Rebecca Gustine
+- Justin Pflug
+- Ziheng Sun
+- Mahboubeh Bousshagh
+- Irene Garousi-Nejad, 
+- Juan S. Acero Triana
+- Bonan Li
+- Rebecca Gustine
 
 ## Development Platform
 
