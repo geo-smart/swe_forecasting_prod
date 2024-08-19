@@ -19,8 +19,10 @@ The current datasets that are used to create the `training.csv`:
 ## Team
 
 ### GeoHackWeek 2024 Team
-
-
+- Justin Pflug
+- Ziheng Sun
+- Keenan Ganz
+- Millie Spencer
 
 ### GeoSMART Hackweek 2023 Team
 
