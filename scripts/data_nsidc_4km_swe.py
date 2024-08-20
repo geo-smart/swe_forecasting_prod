@@ -36,6 +36,7 @@ github_dir = f"{homedir}/Documents/GitHub/SnowCast"
 # read grid cell
 grid_cells = f"{github_dir}/data/snowcast_provided/grid_cells.geojson"
 station_cell_mapper_file = f"{github_dir}/data/ready_for_training/station_cell_mapping.csv"
+print("station_cell_mapper_file = ", station_cell_mapper_file)
 station_cell_mapper_df = pd.read_csv(station_cell_mapper_file)
 # open nsidc data file (netCDF)
 # crs, lat, lon, time, time_str, DEPTH, SWE, SWE_MASK
@@ -183,5 +184,6 @@ def turn_nsidc_nc_to_csv():
 
     print("finished")
 
-# call this method to extract the 
-#turn_nsidc_nc_to_csv()
+if __name__ == "__main__":
+    # call this method to extract the 
+    turn_nsidc_nc_to_csv()

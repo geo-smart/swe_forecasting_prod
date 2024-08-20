@@ -1,3 +1,6 @@
+# for Bonan to work on pulling the SMAP data for training and testing points
+
+
 
 
 # reminder that if you are installing libraries in a Google Colab instance you will be prompted to restart your kernal
@@ -38,7 +41,7 @@ station_cell_mapper_df = pd.read_csv(station_cell_mapper_file)
 org_name = 'sentinel1'
 product_name = 'COPERNICUS/S1_GRD'
 var_name = 'VV'
-column_name = 's1_grd_vv'
+column_names = 's1_grd_vv'
 
 all_cell_df = pd.DataFrame(columns = ['date', column_name, 'lat', 'lon'])
 
@@ -95,6 +98,9 @@ print(all_cell_df.head())
 print(all_cell_df["s1_grd_vv"].describe())
 all_cell_df.to_csv(f"{work_dir}/Sentinel1_Testing.csv")
 print("The Sentinel 1 is downloaded successfully. ")
+
+
+
 
 
 

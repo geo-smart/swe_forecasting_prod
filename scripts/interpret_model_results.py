@@ -12,6 +12,8 @@ from sklearn.inspection import partial_dependence,PartialDependenceDisplay
 import shap
 import matplotlib.pyplot as plt
 
+feature_names = None
+
 def load_model(model_path):
     """
     Load a trained machine learning model from a given path.
@@ -64,22 +66,39 @@ def preprocess_data(data):
                          'tmmx': 'air_temperature_tmmx',
                          'rmin': 'relative_humidity_rmin',
                          'rmax': 'relative_humidity_rmax',
-                         'AMSR_SWE': 'SWE',
-                         'AMSR_Flag': 'Flag',
                          'Elevation': 'elevation',
                          'Slope': 'slope',
                          'Aspect': 'aspect',
                          'Curvature': 'curvature',
                          'Northness': 'northness',
-                         'Eastness': 'eastness'
+                         'Eastness': 'eastness',
+                         'cumulative_AMSR_SWE': 'cumulative_SWE',
+                         'cumulative_AMSR_Flag': 'cumulative_Flag',
+                         'cumulative_tmmn':'cumulative_air_temperature_tmmn',
+                         'cumulative_etr': 'cumulative_potential_evapotranspiration',
+                         'cumulative_vpd': 'cumulative_mean_vapor_pressure_deficit',
+                         'cumulative_rmax': 'cumulative_relative_humidity_rmax', 
+                         'cumulative_rmin': 'cumulative_relative_humidity_rmin',
+                         'cumulative_pr': 'cumulative_precipitation_amount',
+                         'cumulative_tmmx': 'cumulative_air_temperature_tmmx',
+                         'cumulative_vs': 'cumulative_wind_speed',
+                         'AMSR_SWE': 'SWE',
+                         'AMSR_Flag': 'Flag',
                         }, inplace=True)
 
-    desired_order = ['date', 'lat', 'lon', 'SWE', 'Flag',
-'air_temperature_tmmn', 'potential_evapotranspiration',
+    desired_order = ['lat', 'lon', 'SWE', 'Flag', 'air_temperature_tmmn', 'potential_evapotranspiration',
 'mean_vapor_pressure_deficit', 'relative_humidity_rmax',
 'relative_humidity_rmin', 'precipitation_amount',
 'air_temperature_tmmx', 'wind_speed', 'elevation', 'slope', 'curvature',
-'aspect', 'eastness', 'northness']
+'aspect', 'eastness', 'northness', 'cumulative_SWE',
+'cumulative_Flag', 'cumulative_air_temperature_tmmn',
+'cumulative_potential_evapotranspiration',
+'cumulative_mean_vapor_pressure_deficit',
+'cumulative_relative_humidity_rmax',
+'cumulative_relative_humidity_rmin', 'cumulative_precipitation_amount',
+'cumulative_air_temperature_tmmx', 'cumulative_wind_speed']
+    
+    feature_names = desired_order
     
     data = data[desired_order]
     data = data.reindex(columns=desired_order)
@@ -91,6 +110,7 @@ def preprocess_data(data):
     print('data.shape: ', data.shape)
     
     #data = data.drop(['date', 'SWE', 'Flag', 'mean_vapor_pressure_deficit', 'potential_evapotranspiration', 'air_temperature_tmmx', 'relative_humidity_rmax', 'relative_humidity_rmin', ], axis=1)
+    data = data.drop(['lat', 'lon',], axis=1)
     
     return data
 
@@ -137,7 +157,7 @@ def plot_feature_importance():
     model_path = f'/home/chetana/Documents/GitHub/SnowCast/model/wormhole_ETHole_latest.joblib'
     model = load_model(model_path)
     
-    training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3_time_series.csv'
+    training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3_time_series_cumulative_v1.csv'
     print("preparing training data from csv: ", training_data_path)
     data = pd.read_csv(training_data_path)
     data = data.drop('swe_value', axis=1) 
@@ -191,7 +211,6 @@ def interpret_prediction():
     
 
     # Step 2: Partial Dependence Plots
-
     # Select features for partial dependence plots (e.g., the first two features)
     features_to_plot = feature_names
     
@@ -232,5 +251,5 @@ def interpret_prediction():
 
 
 #plot_feature_importance()  # no need, this step is already done in the model post processing step. 
-#interpret_prediction()
+interpret_prediction()
 

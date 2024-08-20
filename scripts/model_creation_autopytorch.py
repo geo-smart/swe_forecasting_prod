@@ -2,9 +2,15 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 import autopytorch as apt
+from snowcast_utils import work_dir, month_to_season
 
+
+working_dir = work_dir
+
+
+training_data_path = f"{working_dir}/snotel_ghcnd_stations_4yrs_all_cols_log10.csv"
 # Load the data from a CSV file
-df = pd.read_csv('/home/chetana/gridmet_test_run/five_years_data.csv')
+df = pd.read_csv(training_data_path)
 
 # Remove rows with missing values
 df.dropna(inplace=True)

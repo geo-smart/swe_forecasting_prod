@@ -56,6 +56,10 @@ class BaseHole:
         date_time = now.strftime("%Y%d%m%H%M%S")
         self.save_file = f"{github_dir}/model/wormhole_{self.holename}_{date_time}.joblib"
         
+        directory = os.path.dirname(self.save_file)
+        if not os.path.exists(directory):
+          os.makedirs(directory)
+        
         print(f"Saving model to {self.save_file}")
         joblib.dump(self.classifier, self.save_file)
         # copy a version to the latest file placeholder

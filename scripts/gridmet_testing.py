@@ -92,7 +92,7 @@ def get_current_year():
     current_year = now.year
     return current_year
 
-def remove_files_in_folder(folder_path):
+def remove_files_in_folder(folder_path, current_year):
     """
     Remove all files in a specified folder.
 
@@ -105,7 +105,7 @@ def remove_files_in_folder(folder_path):
     # Loop through the files and remove them
     for file in files:
         file_path = os.path.join(folder_path, file)
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) and str(current_year) in file_path and file_path.endswith(".nc"):
             os.remove(file_path)
             print(f"Deleted file: {file_path}")
 
@@ -208,7 +208,7 @@ def create_gridmet_to_dem_mapper(nc_file):
       western_us_dem_df.rename(columns={"Latitude": "dem_lat", 
                                         "Longitude": "dem_lon"}, inplace=True)
       
-    print(western_us_dem_df.head())
+    # print(western_us_dem_df.head())
     
     # Save the new converted AMSR to CSV file
     western_us_dem_df.to_csv(target_csv_path, index=False)
@@ -218,14 +218,14 @@ def create_gridmet_to_dem_mapper(nc_file):
   
 def get_nc_csv_by_coords_and_variable(nc_file,
                                       var_name,
-                                      test_start_date):
+                                      target_date=test_start_date):
     
     create_gridmet_to_dem_mapper(nc_file)
-  
+  	
     mapper_df = pd.read_csv(f'{work_dir}/gridmet_to_dem_mapper.csv')
     
     # get the netcdf file and generate the csv file for every coordinate in the dem_template.csv
-    selected_date = datetime.strptime(test_start_date, "%Y-%m-%d")
+    selected_date = datetime.strptime(target_date, "%Y-%m-%d")
     # Read the NetCDF file
     with nc.Dataset(nc_file) as nc_file:
       # Get a list of all variables in the NetCDF file
@@ -237,12 +237,12 @@ def get_nc_csv_by_coords_and_variable(nc_file,
       day = nc_file.variables['day'][:]
       long_var_name = gridmet_var_mapping[var_name]
       var_col = nc_file.variables[long_var_name][:]
-      print("val_col.shape: ", var_col.shape)
+      #print("val_col.shape: ", var_col.shape)
       
       # Calculate the day of the year
       day_of_year = selected_date.timetuple().tm_yday
       day_index = day_of_year - 1
-      print('day_index:', day_index)
+      #print('day_index:', day_index)
       
       def get_gridmet_var_value(row):
         # Perform your custom calculation here
@@ -253,11 +253,11 @@ def get_nc_csv_by_coords_and_variable(nc_file,
         return var_value
     
       # Use the apply function to apply the custom function to each row
-      print(mapper_df.columns)
-      print(mapper_df.head())
+      # print(mapper_df.columns)
+      # print(mapper_df.head())
       mapper_df[var_name] = mapper_df.apply(get_gridmet_var_value, axis=1)
       
-      print("mapper_df[var_name]: ", mapper_df[var_name].describe())
+      # print("mapper_df[var_name]: ", mapper_df[var_name].describe())
       
       # drop useless columns
       mapper_df = mapper_df[["dem_lat", "dem_lon", var_name]]
@@ -265,25 +265,27 @@ def get_nc_csv_by_coords_and_variable(nc_file,
                                "dem_lon": "Longitude"}, inplace=True)
 
       
-    print(mapper_df.head())
+    # print(mapper_df.head())
     return mapper_df
 
 
-def turn_gridmet_nc_to_csv():
+def turn_gridmet_nc_to_csv(target_date=test_start_date):
     
-    selected_date = datetime.strptime(test_start_date, "%Y-%m-%d")
+    selected_date = datetime.strptime(target_date, "%Y-%m-%d")
+    generated_csvs = []
     for root, dirs, files in os.walk(gridmet_folder_name):
         for file_name in files:
             
             if str(selected_date.year) in file_name and file_name.endswith(".nc"):
                 print(f"Checking file: {file_name}")
                 var_name = get_var_from_file_name(file_name)
-                print("Variable name:", var_name)
-                res_csv = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{test_start_date}.csv"
+                # print("Variable name:", var_name)
+                res_csv = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{target_date}.csv"
 
                 if os.path.exists(res_csv):
                     #os.remove(res_csv)
                     print(f"{res_csv} already exists. Skipping..")
+                    generated_csvs.append(res_csv)
                     continue
 
                 # Perform operations on each file here
@@ -292,24 +294,25 @@ def turn_gridmet_nc_to_csv():
                 file_name = get_file_name_from_path(netcdf_file_path)
 
                 df = get_nc_csv_by_coords_and_variable(netcdf_file_path, 
-                                                       var_name, test_start_date)
+                                                       var_name, target_date)
                 df.replace('--', pd.NA, inplace=True)
                 df.to_csv(res_csv, index=False)
                 print("gridmet var saved: ", res_csv)
-                
+                generated_csvs.append(res_csv)
+    return generated_csvs   
 
-def plot_gridmet():
-  selected_date = datetime.strptime(test_start_date, "%Y-%m-%d")
+def plot_gridmet(target_date=test_start_date):
+  selected_date = datetime.strptime(target_date, "%Y-%m-%d")
   var_name = "pr"
-  test_csv = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{test_start_date}.csv"
+  test_csv = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{target_date}.csv"
   gridmet_var_df = pd.read_csv(test_csv)
   gridmet_var_df.replace('--', pd.NA, inplace=True)
   gridmet_var_df.dropna(inplace=True)
   gridmet_var_df['pr'] = pd.to_numeric(gridmet_var_df['pr'], errors='coerce')
-  print(gridmet_var_df.head())
+  #print(gridmet_var_df.head())
   #print(gridmet_var_df["Latitude"].describe())
   #print(gridmet_var_df["Longitude"].describe())
-  print(gridmet_var_df["pr"].describe())
+  #print(gridmet_var_df["pr"].describe())
   
   colormaplist, value_ranges = create_color_maps_with_value_range(gridmet_var_df[var_name])
   
@@ -326,25 +329,218 @@ def plot_gridmet():
   plt.title('Scatter Plot Example')
   plt.legend()
   
-  res_png_path = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{test_start_date}.png"
+  res_png_path = f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{target_date}.png"
   plt.savefig(res_png_path)
   print(f"test image is saved at {res_png_path}")
                 
-def prepare_folder_and_get_year_list():
+def prepare_folder_and_get_year_list(target_date=test_start_date):
   # Check if the folder exists, if not, create it
   if not os.path.exists(gridmet_folder_name):
       os.makedirs(gridmet_folder_name)
 
-  selected_date = datetime.strptime(test_start_date, "%Y-%m-%d")
-  year_list = [selected_date.year]
+  selected_date = datetime.strptime(target_date, "%Y-%m-%d")
+  if selected_date.month < 10:
+    past_october_1 = datetime(selected_date.year - 1, 10, 1)
+  else:
+    past_october_1 = datetime(selected_date.year, 10, 1)
+  year_list = [selected_date.year, past_october_1.year]
 
   # Remove any existing files in the folder
   if selected_date.year == datetime.now().year:
-      remove_files_in_folder(gridmet_folder_name)  # only redownload when the year is the current year
+    # check if the current year's netcdf contains the selected date
+    # get etr netcdf and read
+    nc_file = f"{gridmet_folder_name}/tmmx_{selected_date.year}.nc"
+    ifremove = False
+    if os.path.exists(nc_file):
+      with nc.Dataset(nc_file) as ncd:
+        day = ncd.variables['day'][:]
+        # Calculate the day of the year
+        day_of_year = selected_date.timetuple().tm_yday
+        day_index = day_of_year - 1
+        if len(day) <= day_index:
+          ifremove = True
+    
+    if ifremove:
+      print("The current year netcdf has new data. Redownloading..")
+      remove_files_in_folder(gridmet_folder_name, selected_date.year)  # only redownload when the year is the current year
+    else:
+      print("The existing netcdf already covers the selected date. Avoid downloading..")
   return year_list
 
-# Run the download function
-download_gridmet_of_specific_variables(prepare_folder_and_get_year_list())
-turn_gridmet_nc_to_csv()
-plot_gridmet()
+def add_cumulative_column(df, column_name):
+  df[f'cumulative_{column_name}'] = df[column_name].sum()
+  return df
+    
+
+def prepare_cumulative_history_csvs(target_date=test_start_date, force=False):
+  """
+    Prepare cumulative history CSVs for a specified target date.
+
+    Parameters:
+    - target_date (str, optional): The target date in the format 'YYYY-MM-DD'. Default is 'test_start_date'.
+    - force (bool, optional): If True, forcefully regenerate cumulative CSVs even if they already exist. Default is False.
+
+    Returns:
+    None
+
+    This function generates cumulative history CSVs for a specified target date. It traverses the date range from the past
+    October 1 to the target date, downloads gridmet data, converts it to CSV, and merges it into a big DataFrame.
+    The cumulative values are calculated and saved in new CSV files.
+
+    Example:
+    ```python
+    prepare_cumulative_history_csvs(target_date='2023-01-01', force=True)
+    ```
+
+    Note: This function assumes the existence of the following helper functions:
+    - download_gridmet_of_specific_variables
+    - prepare_folder_and_get_year_list
+    - turn_gridmet_nc_to_csv
+    - add_cumulative_column
+    - process_group_value_filling
+    ```
+
+    selected_date = datetime.strptime(target_date, "%Y-%m-%d")
+    print(selected_date)
+    if selected_date.month < 10:
+        past_october_1 = datetime(selected_date.year - 1, 10, 1)
+    else:
+        past_october_1 = datetime(selected_date.year, 10, 1)
+
+    # Rest of the function logic...
+
+    filled_data = filled_data.loc[:, ['Latitude', 'Longitude', var_name, f'cumulative_{var_name}']]
+    print("new_df final shape: ", filled_data.head())
+    filled_data.to_csv(cumulative_target_path, index=False)
+    print(f"new df is saved to {cumulative_target_path}")
+    print(filled_data.describe())
+    ```
+Note: This docstring includes placeholders such as "download_gridmet_of_specific_variables" and "prepare_folder_and_get_year_list" for the assumed existence of related helper functions. You should replace these placeholders with actual documentation for those functions.
+  """
+  selected_date = datetime.strptime(target_date, "%Y-%m-%d")
+  print(selected_date)
+  if selected_date.month < 10:
+    past_october_1 = datetime(selected_date.year - 1, 10, 1)
+  else:
+    past_october_1 = datetime(selected_date.year, 10, 1)
+
+  # Traverse and print every day from past October 1 to the specific date
+  current_date = past_october_1
+  
+  date_keyed_objects = {}
+  
+  download_gridmet_of_specific_variables(
+    prepare_folder_and_get_year_list(target_date=target_date)
+  )
+  
+  while current_date <= selected_date:
+    print(current_date.strftime('%Y-%m-%d'))
+    current_date_str = current_date.strftime('%Y-%m-%d')
+    
+    
+    generated_csvs = turn_gridmet_nc_to_csv(target_date=current_date_str)
+    
+    # read the csv into dataframe and merge to the big dataframe
+    date_keyed_objects[current_date_str] = generated_csvs
+    
+    current_date += timedelta(days=1)
+    
+  print("date_keyed_objects: ", date_keyed_objects)
+  target_generated_csvs = date_keyed_objects[target_date]
+  for index, single_csv in enumerate(target_generated_csvs):
+    # traverse the variables of gridmet here
+    # each variable is a loop
+    print(f"creating cumulative for {single_csv}")
+    
+    cumulative_target_path = f"{single_csv}_cumulative.csv"
+    print("cumulative_target_path = ", cumulative_target_path)
+    
+    if os.path.exists(cumulative_target_path) and not force:
+      print(f"{cumulative_target_path} already exists, skipping..")
+      continue
+    
+    # Extract the file name without extension
+    file_name = os.path.splitext(os.path.basename(single_csv))[0]
+    gap_filled_csv = f"{cumulative_target_path}_gap_filled.csv"
+
+	# Split the file name using underscores
+    var_name = file_name.split('_')[1]
+    print(f"Found variable name {var_name}")
+    current_date = past_october_1
+    new_df = pd.read_csv(single_csv)
+    print(new_df.head())
+    
+    all_df = pd.read_csv(f"{work_dir}/testing_output/{str(selected_date.year)}_{var_name}_{target_date}.csv")
+    all_df["date"] = target_date
+    all_df[var_name] = pd.to_numeric(all_df[var_name], errors='coerce')
+    
+#     while current_date <= selected_date:
+#       print(current_date.strftime('%Y-%m-%d'))
+#       current_date_str = current_date.strftime('%Y-%m-%d')
+#       #current_generated_csv = date_keyed_objects[current_date_str][index]
+#       current_generated_csv = f"{work_dir}/testing_output/{str(current_date.year)}_{var_name}_{current_date_str}.csv"
+#       print(f"reading file: {current_generated_csv}")
+#       previous_df = pd.read_csv(current_generated_csv)
+#       previous_df["date"] = current_date_str
+#       previous_df[var_name] = pd.to_numeric(previous_df[var_name], errors='coerce')
+      
+#       if all_df is None:
+#         all_df = previous_df
+#       else:
+#         all_df = pd.concat([all_df, previous_df], ignore_index=True)
+      
+#       current_date += timedelta(days=1)
+    
+    
+#     print("all df head: ", all_df.shape, all_df[var_name].describe())
+    
+    # add all the columns together and save to new csv
+    # Adding all columns except latitude and longitude
+    
+#     def process_group_value_filling(group, var_name, target_date):
+#       # Sort the group by 'date'
+# #       group = group.sort_values(by='date')
+#       # no need to interpolate for gridmet, only add the cumulative columns
+#       cumvalue = group[var_name].sum()
+#       group = group[(group['date'] == target_date)]
+#       group[f'cumulative_{var_name}'] = cumvalue
+#       return group
+
+#     grouped = all_df.groupby(['Latitude', 'Longitude'])
+#     # Apply the function to each group
+#     filled_data = grouped.apply(lambda group: process_group_value_filling(group, var_name, target_date)).reset_index(drop=True)
+    filled_data = all_df
+    filled_data = filled_data[(filled_data['date'] == target_date)]
+    
+    filled_data.fillna(0, inplace=True)
+    
+#     print("filled_data.shape = ", filled_data.shape)
+#     print("filled_data.head = ", filled_data.head())
+#     print(f"filled_data[{var_name}].unique() = {filled_data[var_name].describe()}")
+    # only retain the rows of the target date
+    
+	
+    print("Finished correctly ", filled_data.head())
+    #filled_data.to_csv(gap_filled_csv, index=False)
+    #print(f"New filled values csv is saved to {gap_filled_csv}_gap_filled.csv")
+    
+    filled_data = filled_data[['Latitude', 'Longitude', 
+                               var_name, 
+#                                f'cumulative_{var_name}'
+                              ]]
+    print(filled_data.shape)
+    filled_data.to_csv(cumulative_target_path, index=False)
+    print(f"new df is saved to {cumulative_target_path}")
+    print(filled_data.describe())
+
+
+if __name__ == "__main__":
+  # Run the download function
+#   download_gridmet_of_specific_variables(prepare_folder_and_get_year_list())
+#   turn_gridmet_nc_to_csv()
+#   plot_gridmet()
+
+  # prepare testing data with cumulative variables
+  prepare_cumulative_history_csvs(force=True)
+
 

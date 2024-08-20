@@ -4,11 +4,7 @@ import math
 import numpy as np
 import os
 import pandas as pd
-# import ee
-#import seaborn as sns
 import matplotlib.pyplot as plt
-#import geopandas as gpd
-#import geojson
 
 today = date.today()
 
@@ -16,11 +12,33 @@ today = date.today()
 d1 = today.strftime("%Y-%m-%d")
 print("today date =", d1)
 
-train_start_date = "2019-01-01"
-train_end_date = "2022-12-31"
+# -125, 25, -100, 49
+southwest_lon = -125.0
+southwest_lat = 25.0
+northeast_lon = -100.0
+northeast_lat = 49.0
 
-test_start_date = "2023-05-17"
-test_end_date = d1
+# the training period is three years from 2018 to 2021
+train_start_date = "2018-01-03"
+train_end_date = "2021-12-31"
+
+def get_operation_day():
+  # Get the current date and time
+  current_date = datetime.now()
+
+  # Calculate three days ago
+  three_days_ago = current_date - timedelta(days=3)
+
+  # Format the date as a string
+  three_days_ago_string = three_days_ago.strftime("%Y-%m-%d")
+
+  print(three_days_ago_string)
+  return three_days_ago_string
+
+test_start_date = get_operation_day()
+#test_start_date = "2024-03-20" # use this for debugging and generating SWE map for specific day
+test_end_date = "2024-5-19"
+#test_end_date = d1
 print("test start date: ", test_start_date)
 print("test end date: ", test_end_date)
 
@@ -29,7 +47,7 @@ homedir = os.path.expanduser('~')
 print(homedir)
 github_dir = f"{homedir}/Documents/GitHub/SnowCast"
 
-work_dir = "/home/chetana/gridmet_test_run"
+work_dir = f"{homedir}/gridmet_test_run"
 
 # Define a function to convert the month to season
 def month_to_season(month):
@@ -60,6 +78,11 @@ def calculateDistance(lat1, lon1, lat2, lon2):
     lat2 = float(lat2)
     lon2 = float(lon2)
     return math.sqrt((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)
+
+def read_json_file(file_path):
+    with open(file_path, 'r', encoding='utf-8-sig') as json_file:
+        data = json.load(json_file)
+        return data
 
 def create_cell_location_csv():
     """
@@ -152,9 +175,25 @@ def convert_date_to_1900(date_string):
     day_value = delta.days
     return day_value
 
-day_index = convert_date_to_1900(test_start_date)
-#create_cell_location_csv()
-#findLastStopDate(f"{github_dir}/data/sim_testing/gridmet/", "%Y-%m-%d %H:%M:%S")
-#findLastStopDate(f"{github_dir}/data/sat_testing/sentinel1/", "%Y-%m-%d %H:%M:%S")
-#findLastStopDate(f"{github_dir}/data/sat_testing/modis/", "%Y-%m-%d")
+def date_to_julian(date_str):
+    """
+    Convert a date to Julian date.
+    """
+    date_object = datetime.strptime(date_str, "%Y-%m-%d")
+    tt = date_object.timetuple()
+    
+
+    # Format the result as 'YYYYDDD'
+    julian_format = str('%d%03d' % (tt.tm_year, tt.tm_yday))
+
+    return julian_format
+  
+
+if __name__ == "__main__":
+    print(date_to_julian(test_start_date))
+    #day_index = convert_date_to_1900(test_start_date)
+    #create_cell_location_csv()
+    #findLastStopDate(f"{github_dir}/data/sim_testing/gridmet/", "%Y-%m-%d %H:%M:%S")
+    #findLastStopDate(f"{github_dir}/data/sat_testing/sentinel1/", "%Y-%m-%d %H:%M:%S")
+    #findLastStopDate(f"{github_dir}/data/sat_testing/modis/", "%Y-%m-%d")
 

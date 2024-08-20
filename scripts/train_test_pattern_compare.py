@@ -50,17 +50,20 @@ def compare():
         None
     """
     new_testing_data_path = f'{work_dir}/testing_all_ready_for_check.csv'
-    training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3.csv'
+    training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3_time_series_cumulative_v1.csv'
 
     tr_df = pd.read_csv(training_data_path)
     tr_df = clean_train_df(tr_df)
     te_df = pd.read_csv(new_testing_data_path)
     
-    tr_df = tr_df.drop('date', axis=1)
-    te_df = te_df.drop('date', axis=1)
+    #tr_df = tr_df.drop('date', axis=1)
+    #te_df = te_df.drop('date', axis=1)
 
     print("Training DataFrame: ", tr_df)
     print("Testing DataFrame: ", te_df)
+    
+    te_df = te_df.apply(pd.to_numeric, errors='coerce')
+    print("te_df describe: ", te_df.describe())
 
     print("Training columns: ", tr_df.columns)
     print("Testing columns: ", te_df.columns)
@@ -85,6 +88,8 @@ def compare():
         axs[i].hist(tr_df[col], bins=100, alpha=0.5, color='blue', label='Train')
         if col in te_df.columns:
             axs[i].hist(te_df[col], bins=100, alpha=0.5, color='red', label='Test')
+        else:
+          print(f"Error: {col} is not in testing csv")
 
         axs[i].set_title(f'{col}')
         axs[i].legend()
@@ -96,7 +101,7 @@ def compare():
     plt.close()
 
 def calculate_feature_colleration_in_training():
-  training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3.csv'
+  training_data_path = f'{work_dir}/final_merged_data_3yrs_cleaned_v3_time_series_cumulative_v1.csv'
   tr_df = pd.read_csv(training_data_path)
   tr_df = clean_train_df(tr_df)
   

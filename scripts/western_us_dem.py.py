@@ -8,6 +8,7 @@ from rasterio.transform import Affine
 from scipy.ndimage import sobel, gaussian_filter
 
 mile_to_meters = 1609.34
+feet_to_meters = 0.3048
 
 # Set the warning filter globally to ignore the FutureWarning
 warnings.simplefilter("ignore", FutureWarning)
@@ -93,6 +94,25 @@ def print_statistics(data):
     print("Standard Deviation:", std_dev)
     print("Variance:", variance)
 
+def calculate_slope(dem_file):
+    from osgeo import gdal
+    import numpy as np
+    import rasterio
+    gdal.DEMProcessing(f'{dem_file}_slope.tif', dem_file, 'slope')
+    with rasterio.open(f'{dem_file}_slope.tif') as dataset:
+        slope=dataset.read(1)
+    return slope
+  
+def calculate_aspect(dem_file):
+    from osgeo import gdal
+    import numpy as np
+    import rasterio
+    gdal.DEMProcessing(f'{dem_file}_aspect.tif', dem_file, 'aspect')
+    with rasterio.open(f'{dem_file}_aspect.tif') as dataset:
+        aspect=dataset.read(1)
+    return aspect
+    
+    
 def calculate_slope_aspect(dem_file):
     """
     Calculate slope and aspect from a DEM (Digital Elevation Model) file.
@@ -109,10 +129,12 @@ def calculate_slope_aspect(dem_file):
 
         # Get the geotransform to convert pixel coordinates to geographic coordinates
         transform = dataset.transform
-
         # Calculate the slope and aspect using numpy
-        dx, dy = np.gradient(dem_data, transform[0], transform[4])
-        slope = np.degrees(np.arctan(np.sqrt(dx**2 + dy**2)))
+        dx, dy = np.gradient(dem_data)
+#         print("dx : ", dx)
+#         print("dy : ", dy)
+        slope = np.arctan(np.sqrt(dx**2 + dy**2))
+        slope = 90 - np.degrees(slope)
         aspect = np.degrees(np.arctan2(-dy, dx))
 
         # Adjust aspect values to range from 0 to 360 degrees
@@ -136,6 +158,30 @@ def calculate_curvature(elevation_data, pixel_size_x, pixel_size_y):
     curvature_x = np.gradient(np.gradient(elevation_data, pixel_size_x, axis=1), pixel_size_x, axis=1)
     curvature_y = np.gradient(np.gradient(elevation_data, pixel_size_y, axis=0), pixel_size_y, axis=0)
     curvature = curvature_x + curvature_y
+
+    return curvature
+  
+def calculate_curvature(dem_file, sigma=1):
+    with rasterio.open(dem_file) as dataset:
+        # Read the DEM data as a numpy array
+        dem_data = dataset.read(1)
+        
+        # the dem is in meter unit
+        dem_data = dem_data
+
+        # Calculate the gradient using the Sobel filter
+        dx = sobel(dem_data, axis=1, mode='constant')
+        dy = sobel(dem_data, axis=0, mode='constant')
+
+        # Calculate the second derivatives using the Sobel filter
+        dxx = sobel(dx, axis=1, mode='constant')
+        dyy = sobel(dy, axis=0, mode='constant')
+
+        # Calculate the curvature using the second derivatives
+        curvature = dxx + dyy
+
+        # Smooth the curvature using Gaussian filtering (optional)
+        curvature = gaussian_filter(curvature, sigma)
 
     return curvature
 
@@ -177,8 +223,8 @@ def geotiff_to_csv(geotiff_file, csv_file, column_name):
         data = dataset.read(1)
 
         if column_name == "Elevation":
-            # Convert miles to meters (if applicable)
-            data = data * mile_to_meters
+            # default unit is meter
+            data = data
 
         # Get the geotransform to convert pixel coordinates to geographic coordinates
         transform = dataset.transform
@@ -234,58 +280,62 @@ def read_elevation_data(file_path, result_dem_csv_path, result_dem_feature_csv_p
     print(f"DEM and other columns are saved to file {result_dem_feature_csv_path}")
     return all_df
 
-# Usage example:
-result_dem_csv_path = "/home/chetana/gridmet_test_run/dem_template.csv"
-result_dem_feature_csv_path = "/home/chetana/gridmet_test_run/dem_all.csv"
 
-dem_file = "/home/chetana/gridmet_test_run/dem_file.tif"
-slope_file = '/home/chetana/gridmet_test_run/slope_file.tif'
-aspect_file = '/home/chetana/gridmet_test_run/aspect_file.tif'
-curvature_file = '/home/chetana/gridmet_test_run/curvature_file.tif'
-northness_file = '/home/chetana/gridmet_test_run/northness_file.tif'
-eastness_file = '/home/chetana/gridmet_test_run/eastness_file.tif'
+if __name__ == "__main__":
+    # Usage example:
+    result_dem_csv_path = "/home/chetana/gridmet_test_run/dem_template.csv"
+    result_dem_feature_csv_path = "/home/chetana/gridmet_test_run/dem_all.csv"
 
-slope, aspect = calculate_slope_aspect(dem_file)
-curvature = calculate_curvature(dem_file)
-northness, eastness = calculate_gradients(dem_file)
+    dem_file = "/home/chetana/gridmet_test_run/dem_file.tif"
+    slope_file = '/home/chetana/gridmet_test_run/dem_file.tif_slope.tif'
+    aspect_file = '/home/chetana/gridmet_test_run/dem_file.tif_aspect.tif'
+    curvature_file = '/home/chetana/gridmet_test_run/curvature_file.tif'
+    northness_file = '/home/chetana/gridmet_test_run/northness_file.tif'
+    eastness_file = '/home/chetana/gridmet_test_run/eastness_file.tif'
 
-# Save the slope and aspect as new GeoTIFF files
-save_as_geotiff(slope, slope_file, dem_file)
-save_as_geotiff(aspect, aspect_file, dem_file)
-save_as_geotiff(curvature, curvature_file, dem_file)
-save_as_geotiff(northness, northness_file, dem_file)
-save_as_geotiff(eastness, eastness_file, dem_file)
+    slope, aspect = calculate_slope_aspect(dem_file)
+    # slope = calculate_slope(dem_file)
+    # aspect = calculate_aspect(dem_file)
+    curvature = calculate_curvature(dem_file)
+    northness, eastness = calculate_gradients(dem_file)
 
-geotiff_to_csv(dem_file, dem_file+".csv", "Elevation")
-geotiff_to_csv(slope_file, slope_file+".csv", "Slope")
-geotiff_to_csv(aspect_file, aspect_file+".csv", "Aspect")
-geotiff_to_csv(curvature_file, curvature_file+".csv", "Curvature")
-geotiff_to_csv(northness_file, northness_file+".csv", "Northness")
-geotiff_to_csv(eastness_file, eastness_file+".csv", "Eastness")
+    # Save the slope and aspect as new GeoTIFF files
+    save_as_geotiff(slope, slope_file, dem_file)
+    save_as_geotiff(aspect, aspect_file, dem_file)
+    save_as_geotiff(curvature, curvature_file, dem_file)
+    save_as_geotiff(northness, northness_file, dem_file)
+    save_as_geotiff(eastness, eastness_file, dem_file)
 
-# List of file paths for the CSV files
-csv_files = [dem_file+".csv", slope_file+".csv", aspect_file+".csv", 
-             curvature_file+".csv", northness_file+".csv", eastness_file+".csv"]
+    geotiff_to_csv(dem_file, dem_file+".csv", "Elevation")
+    geotiff_to_csv(slope_file, slope_file+".csv", "Slope")
+    geotiff_to_csv(aspect_file, aspect_file+".csv", "Aspect")
+    geotiff_to_csv(curvature_file, curvature_file+".csv", "Curvature")
+    geotiff_to_csv(northness_file, northness_file+".csv", "Northness")
+    geotiff_to_csv(eastness_file, eastness_file+".csv", "Eastness")
 
-# Initialize an empty list to store all dataframes
-dfs = []
+    # List of file paths for the CSV files
+    csv_files = [dem_file+".csv", slope_file+".csv", aspect_file+".csv", 
+                 curvature_file+".csv", northness_file+".csv", eastness_file+".csv"]
 
-# Read each CSV file into separate dataframes
-for file in csv_files:
-    df = pd.read_csv(file, encoding='utf-8')
-    dfs.append(df)
+    # Initialize an empty list to store all dataframes
+    dfs = []
 
-# Merge the dataframes based on the latitude and longitude columns
-merged_df = dfs[0]  # Start with the first dataframe
-for i in range(1, len(dfs)):
-    merged_df = pd.merge(merged_df, dfs[i], on=['Latitude', 'Longitude', 'x', 'y'])
+    # Read each CSV file into separate dataframes
+    for file in csv_files:
+        df = pd.read_csv(file, encoding='utf-8')
+        dfs.append(df)
 
-# check the statistics of the columns
-for column in merged_df.columns:
-    merged_df[column] = pd.to_numeric(merged_df[column], errors='coerce')
-    print(merged_df[column].describe())
-    
-# Save the merged dataframe to a new CSV file
-merged_df.to_csv(result_dem_feature_csv_path, index=False)
-print(f"New dem features are updated in {result_dem_feature_csv_path}")
+    # Merge the dataframes based on the latitude and longitude columns
+    merged_df = dfs[0]  # Start with the first dataframe
+    for i in range(1, len(dfs)):
+        merged_df = pd.merge(merged_df, dfs[i], on=['Latitude', 'Longitude', 'x', 'y'])
+
+    # check the statistics of the columns
+    for column in merged_df.columns:
+        merged_df[column] = pd.to_numeric(merged_df[column], errors='coerce')
+        print(merged_df[column].describe())
+
+    # Save the merged dataframe to a new CSV file
+    merged_df.to_csv(result_dem_feature_csv_path, index=False)
+    print(f"New dem features are updated in {result_dem_feature_csv_path}")
 
