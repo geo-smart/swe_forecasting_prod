@@ -1,1 +1,3 @@
 scripts/modis_surface_reflectance/
+.ipynb_checkpoints/
+__pycache__/
