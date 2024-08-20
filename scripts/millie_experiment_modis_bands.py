@@ -10,11 +10,6 @@ from shapely.geometry import Point
 from shapely.ops import transform
 import pyproj
 
-import dask.array as da
-from dask import delayed, compute
-from dask.diagnostics import ProgressBar
-from haversine import haversine
-
 # Directory setup
 modis_input_folder = os.getcwd() + "/modis_surface_reflectance/"
 os.makedirs(modis_input_folder, exist_ok=True)
@@ -22,7 +17,7 @@ os.makedirs(modis_input_folder, exist_ok=True)
 # Define the time range and bounding box
 start_date = "2018-01-01"
 end_date = "2018-01-07"
-bounding_box = (-109.0, 36.0, -102.0, 41.0)  # Bounding box for Colorado Rockies
+bounding_box = (-125.0, 43.0, -124.0, 44.0)  # Bounding box for section of the Oregon Coast pesky area
 
 # Download MODIS surface reflectance bands
 def download_modis_surface_reflectance(start_date, end_date, bounding_box, input_folder):
@@ -68,47 +63,40 @@ def haversine(lon1, lat1, lon2, lat2):
     return R * c
 
 # Integrate MODIS bands and SNOTEL data
-@delayed
-def process_file(hdf_file, snotel_data):
+def integrate_modis_snotel(modis_folder, snotel_data):
+    print("Integrating MODIS bands with SNOTEL data...")
     X = []
     y = []
     
-    bands = extract_surface_reflectance_bands(hdf_file)
-    
-    # Extract pixel coordinates from bands (placeholder)
-    pixel_coords = np.zeros((bands["Band_1"].shape[0], bands["Band_1"].shape[1], 2))  # Placeholder
-    
-    for lat, lon, swe in snotel_data[['lat', 'lon', 'swe_value']].values:
-        # Vectorized approach to compute all distances and find the closest pixel
-        latlon_array = np.dstack((pixel_coords[:, :, 0].flatten(), pixel_coords[:, :, 1].flatten()))[0]
-        distances = np.apply_along_axis(lambda x: haversine(lon, lat, x[1], x[0]), 1, latlon_array)
-        closest_pixel_idx = np.argmin(distances)
-        min_distance = distances[closest_pixel_idx]
-        
-        if min_distance <= 10:  # Only use if within 10 km
-            closest_pixel = np.unravel_index(closest_pixel_idx, (bands["Band_1"].shape[0], bands["Band_1"].shape[1]))
-            band_values = [bands[band].flatten()[closest_pixel_idx] for band in bands]
-            X.append(band_values)
-            y.append(swe)
-    
-    return np.array(X), np.array(y)
-
-def integrate_modis_snotel(modis_folder, snotel_data):
-    print("Integrating MODIS bands with SNOTEL data...")
-    
-    hdf_files = [os.path.join(modis_folder, file) for file in os.listdir(modis_folder) if file.endswith(".hdf")]
-    
-    # Process files in parallel using Dask
-    results = [process_file(hdf_file, snotel_data) for hdf_file in hdf_files]
-    with ProgressBar():
-        computed_results = compute(*results)
-    
-    # Combine the results from all files
-    X = np.vstack([res[0] for res in computed_results])
-    y = np.hstack([res[1] for res in computed_results])
+    for file in os.listdir(modis_folder):
+        if file.endswith(".hdf"):
+            hdf_file = os.path.join(modis_folder, file)
+            bands = extract_surface_reflectance_bands(hdf_file)
+            
+            # Extract pixel coordinates from bands and match with SNOTEL data
+            # This should be replaced with actual pixel coordinate extraction logic
+            pixel_coords = np.zeros((bands["Band_1"].shape[0], bands["Band_1"].shape[1], 2))  # Placeholder
+            
+            for lat, lon, swe in snotel_data[['lat', 'lon', 'swe_value']].values:
+                min_distance = float('inf')
+                closest_pixel = None
+                
+                for i in range(pixel_coords.shape[0]):
+                    for j in range(pixel_coords.shape[1]):
+                        pixel_lat, pixel_lon = pixel_coords[i, j]
+                        distance = haversine(lon, lat, pixel_lon, pixel_lat)
+                        
+                        if distance < min_distance:
+                            min_distance = distance
+                            closest_pixel = (i, j)
+                
+                if min_distance <= 10:  # Only use if within 10 km
+                    band_values = [bands[band].flatten()[closest_pixel[0] * bands[band].shape[1] + closest_pixel[1]] for band in bands]
+                    X.append(band_values)
+                    y.append(swe)
     
     print(f"Integration completed. Number of samples: {len(X)}")
-    return X, y
+    return np.array(X), np.array(y)
 
 # Train and evaluate the ML model
 def train_and_evaluate_model(X, y):
