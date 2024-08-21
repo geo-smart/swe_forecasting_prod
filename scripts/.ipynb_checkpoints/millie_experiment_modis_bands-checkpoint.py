@@ -196,7 +196,7 @@ def train_and_evaluate_model(X, y):
 
 def main():
     print("Starting workflow...")
-    # download_modis_surface_reflectance(start_date, end_date, bounding_box, modis_input_folder)
+    download_modis_surface_reflectance(start_date, end_date, bounding_box, modis_input_folder)
     
     snotel_file = "/home/jovyan/shared-public/ml_swe_monitoring_prod/all_snotel_cdec_stations_active_in_westus.csv_swe_restored_dask_all_vars.csv"
     print(f"Loading SNOTEL data from {snotel_file}...")
