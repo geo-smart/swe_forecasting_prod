@@ -3,3 +3,4 @@ scripts/modis_surface_reflectance/
 output_image.jpeg
 sam_vit_h_4b8939*
 *.log
+__pycache__/
