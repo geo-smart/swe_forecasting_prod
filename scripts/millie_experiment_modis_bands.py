@@ -15,6 +15,7 @@ import dask.array as da
 from dask import delayed, compute
 from dask.diagnostics import ProgressBar
 from haversine import haversine
+import xarray as xr
 
 # Directory setup
 modis_input_folder = os.getcwd() + "/modis_surface_reflectance/"
@@ -46,21 +47,103 @@ def filter_snotel_data_within_bounding_box(snotel_data, bounding_box):
     print(f"Filtered SNOTEL data contains {len(filtered_data)} records.")
     return filtered_data
 
-def tile_intersects_bounding_box(hdf_file, bounding_box):
+def extract_band_data(hdf_file, bounding_box, band_indices, band_names, output_csv):
     try:
-        hdf_ds = gdal.Open(hdf_file, gdal.GA_ReadOnly)
-        geo_transform = gdal.Open(hdf_ds.GetSubDatasets()[0][0]).GetGeoTransform()
-        tile_min_x = geo_transform[0]
-        tile_max_x = tile_min_x + geo_transform[1] * hdf_ds.RasterXSize
-        tile_min_y = geo_transform[3] + geo_transform[5] * hdf_ds.RasterYSize
-        tile_max_y = geo_transform[3]
+        # Check if file exists
+        if not os.path.isfile(hdf_file):
+            print(f"File not found: {hdf_file}")
+            return None
+
+        print(f"Opening HDF file: {hdf_file}")
+
+        # Try opening the file with xarray using 'h5netcdf' engine for HDF5
+        try:
+            ds = xr.open_dataset(hdf_file, engine='h5netcdf')
+            print(f"HDF file opened successfully: {hdf_file}")
+        except Exception as e:
+            print(f"Failed to open HDF file with xarray: {e}")
+            return None
+
+        # Verify bands are present
+        available_bands = [f'Band_{i+1}' for i in band_indices]
+        missing_bands = [band for band in available_bands if band not in ds]
+        if missing_bands:
+            print(f"Missing bands in {hdf_file}: {missing_bands}")
+            return None
+
+        # Extract the bands
+        bands = [ds[f'Band_{i+1}'] for i in band_indices]
         
-        lon_min, lat_min, lon_max, lat_max = bounding_box
-        intersects = not (tile_max_x < lon_min or tile_min_x > lon_max or tile_max_y < lat_min or tile_min_y > lat_max)
-        return intersects
+        # Check if 'Longitude' and 'Latitude' exist
+        if 'Longitude' not in ds or 'Latitude' not in ds:
+            print(f"Longitude or Latitude not found in {hdf_file}")
+            return None
+
+        # Get latitude and longitude arrays
+        lon = ds['Longitude'].values
+        lat = ds['Latitude'].values
+        print("Longitude and Latitude arrays retrieved")
+
+        # Define a function to extract and mask the band data
+        def extract_band(band, bounding_box):
+            print(f"Extracting band data with bounding box: {bounding_box}")
+            lon_min, lat_min, lon_max, lat_max = bounding_box
+            mask = (
+                (lon >= lon_min) & (lon <= lon_max) &
+                (lat >= lat_min) & (lat <= lat_max)
+            )
+            band_data = band.where(mask, drop=True).values
+            print(f"Band data shape after masking: {band_data.shape}")
+            return band_data
+        
+        # Extract data for each band
+        band_data_list = []
+        for band, band_name in zip(bands, band_names):
+            print(f"Processing band: {band_name}")
+            band_data = extract_band(band, bounding_box)
+            band_data_flat = band_data.flatten()
+            print(f"Flattened band data shape: {band_data_flat.shape}")
+            band_data_list.append(band_data_flat)
+        
+        # Create DataFrame
+        print("Creating DataFrame with latitude, longitude, and band data")
+        lon_flat = lon.flatten()
+        lat_flat = lat.flatten()
+        df = pd.DataFrame({
+            'Longitude': lon_flat,
+            'Latitude': lat_flat
+        })
+        
+        for band_name, band_data in zip(band_names, band_data_list):
+            df[band_name] = band_data
+        
+        # Save DataFrame to CSV
+        df.to_csv(output_csv, index=False)
+        print(f"Data saved to CSV: {output_csv}")
+        
+        return df
     except Exception as e:
-        print(f"Error checking bounding box intersection for {hdf_file}: {e}")
-        return False
+        print(f"Error extracting band data for {hdf_file}: {e}")
+        return None
+
+
+def process_hdf_files(hdf_folder, bounding_box, output_folder):
+    # Example usage
+    #hdf_folder = 'modis_surface_reflectance'
+    #bounding_box = (-120, 35, -115, 40)  # Example bounding box: (lon_min, lat_min, lon_max, lat_max)
+    band_indices = [0, 1, 2, 3, 4, 5, 6]  # Indices of the bands to process
+    band_names = ['Red', 'NIR', 'Blue', 'Green', 'SWIR_1', 'SWIR_2', 'SWIR_3']  # Band names
+    #output_folder = 'csv_output'
+    
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    for hdf_file in os.listdir(hdf_folder):
+        if hdf_file.endswith('.hdf'):
+            hdf_path = os.path.join(hdf_folder, hdf_file)
+            output_csv = os.path.join(output_folder, f"{os.path.splitext(hdf_file)[0]}.csv")
+            extract_band_data(hdf_path, bounding_box, band_indices, band_names, output_csv)
+
 
 def extract_surface_reflectance_bands(hdf_file, bounding_box):
     if not tile_intersects_bounding_box(hdf_file, bounding_box):
@@ -197,15 +280,21 @@ def train_and_evaluate_model(X, y):
 def main():
     print("Starting workflow...")
     # download_modis_surface_reflectance(start_date, end_date, bounding_box, modis_input_folder)
+
+    # clip the data out from the HDF file and convert them into a CSV file
+    folder_path = "modis_surface_reflectance"
+    output_folder = "processed_bands_csv"
     
-    snotel_file = "/home/jovyan/shared-public/ml_swe_monitoring_prod/all_snotel_cdec_stations_active_in_westus.csv_swe_restored_dask_all_vars.csv"
-    print(f"Loading SNOTEL data from {snotel_file}...")
-    snotel_df = pd.read_csv(snotel_file)
+    process_hdf_files(folder_path, bounding_box, output_folder)
     
-    filtered_snotel_data = filter_snotel_data_within_bounding_box(snotel_df, bounding_box)
+    # snotel_file = "/home/jovyan/shared-public/ml_swe_monitoring_prod/all_snotel_cdec_stations_active_in_westus.csv_swe_restored_dask_all_vars.csv"
+    # print(f"Loading SNOTEL data from {snotel_file}...")
+    # snotel_df = pd.read_csv(snotel_file)
     
-    X, y = integrate_modis_snotel(modis_input_folder, filtered_snotel_data, bounding_box)
-    model = train_and_evaluate_model(X, y)
+    # filtered_snotel_data = filter_snotel_data_within_bounding_box(snotel_df, bounding_box)
+    
+    # X, y = integrate_modis_snotel(modis_input_folder, filtered_snotel_data, bounding_box)
+    # model = train_and_evaluate_model(X, y)
     
     print("Workflow completed.")
 
