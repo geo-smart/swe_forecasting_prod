@@ -34,7 +34,7 @@ class ETHoleTiny:
         self.train_y_result = None
         self.features       = None
 
-    def preprocess_data(self, filepath, chosen_columns=None, verbose=False):
+    def preprocess_data(self, filepath, target="swe_value", chosen_columns=None, verbose=False):
         '''
         Preprocess a dataset at filepath, split it, and save
         the resulting arrays to this object.
@@ -52,7 +52,7 @@ class ETHoleTiny:
         # Replace NAs
         data.replace("--", pd.NA, inplace=True)
         data.fillna(-999, inplace=True)
-        data = data[data["swe_value"]!=-999]
+        data = data[data[target]!=-999]
 
         if chosen_columns is None:
             # Discard non-numeric columns
@@ -62,11 +62,11 @@ class ETHoleTiny:
             # Also drop date, lat, lon
             data = data.drop(columns=["date", "lat", "lon"])
         else:
-            data = data[chosen_columns]
+            data = data[chosen_columns + [target]]
 
-        X = data.drop("swe_value", axis=1)
+        X = data.drop(target, axis=1)
         if verbose: print("Using features", X.columns)
-        y = data["swe_value"]
+        y = data[target]
 
         if verbose:
             print("Descriptive statistics")
