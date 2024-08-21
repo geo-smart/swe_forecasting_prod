@@ -1,1 +1,5 @@
 scripts/modis_surface_reflectance/
+scripts/processed_bands_csv/
+notebooks/.ipynb_checkpoints/
+notebooks/path_to_filtered_output_raster.tif
+scripts/.ipynb_checkpoints/millie_experiment_modis_bands-checkpoint.py
