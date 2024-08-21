@@ -9,6 +9,8 @@ import earthaccess
 from shapely.geometry import Point
 from shapely.ops import transform
 import pyproj
+
+
 import dask.array as da
 from dask import delayed, compute
 from dask.diagnostics import ProgressBar
@@ -22,7 +24,7 @@ os.makedirs(modis_input_folder, exist_ok=True)
 # Define the time range and bounding box
 start_date = "2018-01-01"
 end_date = "2018-01-07"
-bounding_box = (-109.0, 36.0, -102.0, 41.0)  # Bounding box for Colorado Rockies
+bounding_box = (-125.0, 43.0, -124.0, 44.0)  # Bounding box for section of the Oregon Coast pesky area
 
 # Download MODIS surface reflectance bands
 def download_modis_surface_reflectance(start_date, end_date, bounding_box, input_folder):
@@ -174,6 +176,7 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
     return R * c
 
+
 @delayed
 def process_file(hdf_file, filtered_snotel_data, bounding_box):
     X = []
@@ -259,9 +262,10 @@ def integrate_modis_snotel(modis_folder, snotel_data, bounding_box):
     
     X = np.vstack(X_results)
     y = np.hstack(y_results)
+
     
     print(f"Integration completed. Number of samples: {len(X)}")
-    return X, y
+    return np.array(X), np.array(y)
 
 def train_and_evaluate_model(X, y):
     print("Training and evaluating the ML model...")

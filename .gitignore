@@ -1,5 +1,13 @@
 scripts/modis_surface_reflectance/
+<<<<<<< HEAD
 scripts/processed_bands_csv/
 notebooks/.ipynb_checkpoints/
 notebooks/path_to_filtered_output_raster.tif
 scripts/.ipynb_checkpoints/millie_experiment_modis_bands-checkpoint.py
+=======
+.ipynb_checkpoints/
+output_image.jpeg
+sam_vit_h_4b8939*
+*.log
+__pycache__/
+>>>>>>> 17c6c2bef1db0c5adb1f802178ea76ac78375df5
