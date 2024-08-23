@@ -8,7 +8,8 @@ We basically have the barebone workflow up and running, but the machine learning
 
 Some preliminary results and machine learning models are obviously underestimating most time.
 
-![2022_predicted_swe_2022-03-15](https://github.com/geo-smart/swe_forecasting_prod/assets/17322987/f0937113-e757-4022-877c-f46ee332bce4)
+<img width="602" alt="image" src="https://github.com/user-attachments/assets/c25b1e74-0409-4b9f-a21c-ae94e24f1447">
+
 
 The current datasets that are used to create the `training.csv`:
 - NASA SRTM 30M DEM
