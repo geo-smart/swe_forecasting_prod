@@ -24,6 +24,14 @@ The current datasets that are used to create the `training.csv`:
 - Keenan Ganz
 - Millie Spencer
 
+During the hackweek, we wanted to address the "salt and pepper" pixel problem where high SWE is predicted in areas where there definitely isn't snow. 
+
+![salt and pepper example](img/salt_and_pepper.png)
+
+We found that poor-quality pixels in the MODIS FSCA product were to blame (notebooks/modis_qa_investigation.ipynb). When we retrained a smaller version of the model with FSCA from the UCLA reanalysis dataset, the salt and pixel problem disappeared (notebooks/ucla_fsca_swe_investigation.ipynb). However, the reanalysis dataset is not available in real time and FSCA is an important feature in the model, so we have to find another source of FSCA data. One idea we'd like to try is using the raw MODIS reflectance values as input.
+
+We also tested different model architectures to see if the ExtraTrees regressor is still the best performer. Based on AutoKeras, autogluon, and pycaret, tree-based regressors remain the best-performing model (notebooks/autokeras.ipynb and notebooks/ms_auto_ml_model_eval.ipynb). One important difference between tree-based regressor and neural networks is model size. Tree-based regressors were 100x more memory-intensive than neural networks. For small amounts of training data this is not a big problem, but at scale this can severely impede throughput.
+
 ### GeoSMART Hackweek 2023 Team
 
 - Justin Pflug
